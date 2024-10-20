@@ -1,5 +1,5 @@
+use std::io::Read;
 use std::net::TcpListener;
-
 pub struct Server {
     addr: String,
 }
@@ -18,9 +18,14 @@ impl Server {
 
         loop {
             match listener.accept() {
-                Ok((stream, addr)) => { // destructuring used here
-                    let a = 5;
-                    println!("Ok")
+                Ok((mut stream, _)) => { // destructuring used here
+                    let mut buffer = [0; 1024]; // Dynamically allocate buffer
+                    match stream.read(&mut buffer) { // Read data into the buffer    // read requires mutable reference to self as well as &mut [u8]. therefore both array and vector can be used however if an array is used this can cause a buffer overflow if the data received on the socket is more than the specified size.
+                        Ok(_) => {
+                            println!("Received a Request: {}", String::from_utf8_lossy(&buffer))  // We use this safe version of not checking if the utf8 is valid because we dont want the app to crash even if the ut8 isn't valid just yet, there's validation for this ahead
+                        }
+                        Err(e) => println!("Failed to read from connection: {}", e)
+                    }
                 },
                 Err(e) => println!("Failed to establish connection: {}", e)
             }
