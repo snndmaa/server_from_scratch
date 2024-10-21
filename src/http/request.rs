@@ -39,16 +39,16 @@ impl TryFrom<&[u8]> for Request {
 }
 
 fn get_next_word(request: &str) -> Option<(&str, &str)> {
-    let mut iter = request.chars();
+    // let mut iter = request.chars();
+    // loop {
+    //     let item = iter.next();
+    //     match item {
+    //         Some(c) => {}
+    //         None => break 
+    //     }
+    // }
 
-    loop {
-        let item = iter.next();
-        match item {
-            Some(c) => {}
-            None => break 
-        }
-    }
-
+    // The above code can be written alternatively using this format
     for (i, c) in request.chars().enumerate() {  // Loop through each character in the request string. 'enumerate' provides both the index (i) and the character (c) for each iteration.
     if c == ' ' {  // Check if the current character is a space.
         return Some((&request[..i], &request[i + 1..]));  // If a space is found, return a tuple. The first part is the substring before the space, and the second part is the substring after the space.
