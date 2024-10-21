@@ -12,13 +12,13 @@ pub struct Request {
 }
 
 impl Request {
-    // fn from_byte_array(buf: &[u8]) -> Result<Self, String> {}   // We don't do it this way because using traits is idiomatic rust and how type conversions are meant to be carried out.
+    // fn from_byte_array(buf: &[u8]) -> Result<Self, String> {}   // We don't do it this way(directly) because using traits is idiomatic rust and how type conversions are meant to be carried out.
 }
 
 impl TryFrom<&[u8]> for Request {
     type Error = ParseError;
 
-    // GET /search?name=abc&sort=1 HTTP/1.1 - example request
+    // GET /search?name=abc&sort=1 HTTP/1.1\r\n...HEADERS... - example request for visualisation
 
     fn try_from(buf: &[u8]) -> Result<Self, Self::Error>{
         // match str::from_utf8(buf) {
@@ -35,6 +35,22 @@ impl TryFrom<&[u8]> for Request {
         // This in turn can be written in shorthand as the following. Only difference is this will try to convert the error type if it does not match the initally specified type:
         let request = str::from_utf8(buf)?;
 
+        // match get_next_word(request){    // Returns Option so we have to match on the output
+        //     Some((method, request)) => {},
+        //     None => return Err((ParseError::InvalidRequest)),
+        // }
+
+        // Alternative way to handle this which uses our ? operator as done previously in scope
+        let (method, request) = get_next_word(request).ok_or(ParseError::InvalidRequest);   // We use the ok_or to transform our option output into a result Some => Ok and None => Err // Variable shadowing is used here. request is not a change from the original request variable defined instead it is created anew and the old variable becomes unusable
+        // We get our method(/GET) from the request and then output the remainder of the request and then when we run it it separates the next space which is the path (/search?name=abc&sort=1 HTTP/1.1) along with the remainder of the request.
+        let (path, request) = get_next_word(request).ok_or(ParseError::InvalidRequest);
+        // Since we are also checking for \r we also get our protocol on a 3rd call of this function
+        let (protocol, _) = get_next_word(request).ok_or(ParseError::InvalidRequest);
+
+        if protocol != "HTTP/1.1" {
+            return Err(ParseError::InvalidProtocol);
+        }
+
     }
 }
 
@@ -50,7 +66,7 @@ fn get_next_word(request: &str) -> Option<(&str, &str)> {
 
     // The above code can be written alternatively using this format
     for (i, c) in request.chars().enumerate() {  // Loop through each character in the request string. 'enumerate' provides both the index (i) and the character (c) for each iteration.
-    if c == ' ' {  // Check if the current character is a space.
+    if c == ' ' || c == '\r'{  // Check if the current character is a space.
         return Some((&request[..i], &request[i + 1..]));  // If a space is found, return a tuple. The first part is the substring before the space, and the second part is the substring after the space.
         // This code is safe because it deals with UTF-8 characters correctly. If we were dealing with multi-byte characters (like emojis) incorrectly, it could lead to invalid UTF-8 and potentially crash the program.
     }
