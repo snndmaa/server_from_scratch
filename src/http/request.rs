@@ -53,6 +53,28 @@ impl TryFrom<&[u8]> for Request {
 
         let method: Method = method.parse()?;  // .parse used to convert from string to other type. // Can't use ? because this function is expecting a parse error but our method returns a Method Error therefore we must convert 
 
+        let mut query_string = None;
+        // match path.find('?') {
+        //     Some(i) => {
+        //         query_string = Some(&path[i + 1..]);    // query_string previously defined as an option type
+        //         path = &path[..i];
+        //     }
+        //     None => {}
+        // }
+
+        // Alternative method of peforming commented code above
+        // let q = path.find('?');
+        // if q.is_some() {
+        //     let i = q.unwrap();
+        //     query_string = Some(&path[i + 1..]);
+        //     path = &path[..i];
+        // }
+
+        if let Some(i) = path.find('?') {
+            query_string = Some(&path[i + 1..]);
+            path = &path[..i];
+        }
+
         unimplemented!();
     }
 }
