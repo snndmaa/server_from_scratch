@@ -1,4 +1,4 @@
-use super::method::Method;
+use super::method::{Method, MethodError};
 use core::str;
 use std::convert::TryFrom;
 use std::error::Error;
@@ -51,6 +51,9 @@ impl TryFrom<&[u8]> for Request {
             return Err(ParseError::InvalidProtocol);
         }
 
+        let method: Method = method.parse()?;  // .parse used to convert from string to other type. // Can't use ? because this function is expecting a parse error but our method returns a Method Error therefore we must convert 
+
+        unimplemented!();
     }
 }
 
@@ -90,6 +93,12 @@ impl ParseError {
             Self::InvalidMethod => "Invalid Method",
             
         }
+    }
+}
+
+impl From<MethodError> for ParseError {
+    fn from(_: MethodError) -> Self {
+        Self::InvalidMethod
     }
 }
 
