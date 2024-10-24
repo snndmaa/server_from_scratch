@@ -41,11 +41,11 @@ impl TryFrom<&[u8]> for Request {
         // }
 
         // Alternative way to handle this which uses our ? operator as done previously in scope
-        let (method, request) = get_next_word(request).ok_or(ParseError::InvalidRequest);   // We use the ok_or to transform our option output into a result Some => Ok and None => Err // Variable shadowing is used here. request is not a change from the original request variable defined instead it is created anew and the old variable becomes unusable
+        let (method, request) = get_next_word(request).ok_or(ParseError::InvalidRequest)?;   // We use the ok_or to transform our option output into a result Some => Ok and None => Err // Variable shadowing is used here. request is not a change from the original request variable defined instead it is created anew and the old variable becomes unusable
         // We get our method(/GET) from the request and then output the remainder of the request and then when we run it it separates the next space which is the path (/search?name=abc&sort=1 HTTP/1.1) along with the remainder of the request.
-        let (path, request) = get_next_word(request).ok_or(ParseError::InvalidRequest);
+        let (mut path, request) = get_next_word(request).ok_or(ParseError::InvalidRequest)?;
         // Since we are also checking for \r we also get our protocol on a 3rd call of this function
-        let (protocol, _) = get_next_word(request).ok_or(ParseError::InvalidRequest);
+        let (protocol, _) = get_next_word(request).ok_or(ParseError::InvalidRequest)?;
 
         if protocol != "HTTP/1.1" {
             return Err(ParseError::InvalidProtocol);
@@ -71,11 +71,15 @@ impl TryFrom<&[u8]> for Request {
         // }
 
         if let Some(i) = path.find('?') {
-            query_string = Some(&path[i + 1..]);
+            query_string = Some(path[i + 1..].to_string());
             path = &path[..i];
         }
 
-        unimplemented!();
+        Ok(Self {
+            path: path.to_string(),
+            query_string,
+            method,
+        })
     }
 }
 
@@ -91,11 +95,13 @@ fn get_next_word(request: &str) -> Option<(&str, &str)> {
 
     // The above code can be written alternatively using this format
     for (i, c) in request.chars().enumerate() {  // Loop through each character in the request string. 'enumerate' provides both the index (i) and the character (c) for each iteration.
-    if c == ' ' || c == '\r'{  // Check if the current character is a space.
-        return Some((&request[..i], &request[i + 1..]));  // If a space is found, return a tuple. The first part is the substring before the space, and the second part is the substring after the space.
-        // This code is safe because it deals with UTF-8 characters correctly. If we were dealing with multi-byte characters (like emojis) incorrectly, it could lead to invalid UTF-8 and potentially crash the program.
+        if c == ' ' || c == '\r'{  // Check if the current character is a space.
+            return Some((&request[..i], &request[i + 1..]));  // If a space is found, return a tuple. The first part is the substring before the space, and the second part is the substring after the space.
+            // This code is safe because it deals with UTF-8 characters correctly. If we were dealing with multi-byte characters (like emojis) incorrectly, it could lead to invalid UTF-8 and potentially crash the program.
+        }
     }
-}
+    
+    None
 }
 
 
@@ -125,7 +131,7 @@ impl From<MethodError> for ParseError {
 }
 
 impl From<Utf8Error> for ParseError {
-    fn from(value: T) -> Self {
+    fn from(_:Utf8Error) -> Self {
         Self::InvalidEncoding
     }
 }
