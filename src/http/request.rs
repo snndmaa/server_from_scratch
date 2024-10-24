@@ -4,8 +4,9 @@ use std::error::Error;
 use std::fmt::{Display, Debug, Formatter, Result as FmtResult};    // Errors have to apply both the Debug and Display Traits
 use std::str::Utf8Error;
 use super::method::{Method, MethodError};
-use super::{QueryString};
+use super::QueryString;
 
+#[derive(Debug)]    // has to be implemented on all related structs and enums to work
 pub struct Request<'buf> {  // LA The struct Request has a lifetime parameter 'buf, which indicates that any reference within this struct will live at least as long as 'buf.
     path: &'buf str,        // LA The path field is a reference to a string slice with the lifetime 'buf. This means the path reference cannot outlive the data it points to.
     query_string: Option<QueryString<'buf>>, // The query_string is an optional reference to a string slice with the same lifetime 'buf. It ensures that if query_string is Some, the reference is valid for the lifetime 'buf.

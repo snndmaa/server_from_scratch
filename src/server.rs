@@ -30,7 +30,7 @@ impl Server {
                             // let res: &Result<Request, _> = &buffer[..].try_into();   // Alternative way to call our conversion function using try_into instead of try_from
                             match Request::try_from(&buffer[..]){    // We convert this reference to an array of bytes &[u8; 1024] into a byte slice &[u8] to satisfy our trait function. Another way to write this would have been (&buffer as &[u8])
                                 Ok(request) => {
-                                    
+                                    dbg!(request);
                                 }
                                 Err(e) => println!("Failed to parse a request: {}", e)
                             }

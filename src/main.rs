@@ -1,4 +1,4 @@
-#![allow(dead_code)]    // For dev only disable console warnings for deadcode
+#![allow(dead_code)]    // For dev only disable console warnings for deadcode // The ! makes sure it applies to the entire file
 use server::Server;
 use http::Request;
 use http::Method;
