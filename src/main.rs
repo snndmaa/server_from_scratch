@@ -1,3 +1,4 @@
+#![allow(dead_code)]    // For dev only disable console warnings for deadcode
 use server::Server;
 use http::Request;
 use http::Method;
