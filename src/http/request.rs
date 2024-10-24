@@ -1,13 +1,14 @@
-use super::method::{Method, MethodError};
 use core::str;
 use std::convert::TryFrom;
 use std::error::Error;
 use std::fmt::{Display, Debug, Formatter, Result as FmtResult};    // Errors have to apply both the Debug and Display Traits
 use std::str::Utf8Error;
+use super::method::{Method, MethodError};
+use super::{QueryString};
 
 pub struct Request<'buf> {  // LA The struct Request has a lifetime parameter 'buf, which indicates that any reference within this struct will live at least as long as 'buf.
     path: &'buf str,        // LA The path field is a reference to a string slice with the lifetime 'buf. This means the path reference cannot outlive the data it points to.
-    query_string: Option<&'buf str>, // The query_string is an optional reference to a string slice with the same lifetime 'buf. It ensures that if query_string is Some, the reference is valid for the lifetime 'buf.
+    query_string: Option<QueryString<'buf>>, // The query_string is an optional reference to a string slice with the same lifetime 'buf. It ensures that if query_string is Some, the reference is valid for the lifetime 'buf.
     method: Method,         // LA The method field does not have a lifetime annotation because it is not a reference.
 }
 
@@ -71,7 +72,7 @@ impl<'buf> TryFrom<&'buf[u8]> for Request<'buf> {   // LA The implementation blo
         // }
 
         if let Some(i) = path.find('?') {
-            query_string = Some(&path[i + 1..]);    // LA The query_string is a slice of path, so it naturally inherits the lifetime 'buf.
+            query_string = Some(QueryString::from(&path[i + 1..]));    // LA The query_string is a slice of path, so it naturally inherits the lifetime 'buf.
             path = &path[..i];  // LA The path is updated to a slice of itself, maintaining the same lifetime 'buf.
         }
 
