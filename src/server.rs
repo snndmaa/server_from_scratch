@@ -1,8 +1,8 @@
-use std::io::Read;
+use std::io::{ Read, Write };
 use std::net::TcpListener;
 use std::convert::TryFrom;  // Before we can call functions from traits we have to pull the trait into our scope
-use std::convert::TryInto;  // TryFrom implements TryInto therefore we must call this
-use crate::http::Request;   // Accessing the module from the import specified in our root(main.rs)
+// use std::convert::TryInto;  // TryFrom implements TryInto therefore we must call this
+use crate::http::{ Request, Response, StatusCode };   // Accessing the module from the import specified in our root(main.rs)
 pub struct Server {
     addr: String,
 }
@@ -26,13 +26,24 @@ impl Server {
                     match stream.read(&mut buffer) { // Read data into the buffer    // read requires mutable reference to self as well as &mut [u8]. therefore both array and vector can be used however if an array is used this can cause a buffer overflow if the data received on the socket is more than the specified size.
                         Ok(_) => {
                             println!("Received a Request: {}", String::from_utf8_lossy(&buffer));  // We use this safe version of not checking if the utf8 is valid because we dont want the app to crash even if the ut8 isn't valid just yet, there's validation for this ahead
-                            
+
                             // let res: &Result<Request, _> = &buffer[..].try_into();   // Alternative way to call our conversion function using try_into instead of try_from
-                            match Request::try_from(&buffer[..]){    // We convert this reference to an array of bytes &[u8; 1024] into a byte slice &[u8] to satisfy our trait function. Another way to write this would have been (&buffer as &[u8])
+                            let response = match Request::try_from(&buffer[..]){    // We convert this reference to an array of bytes &[u8; 1024] into a byte slice &[u8] to satisfy our trait function. Another way to write this would have been (&buffer as &[u8])
                                 Ok(request) => {
                                     dbg!(request);
+                                    Response::new(
+                                        StatusCode::Ok, 
+                                        Some("<h1>It Works!!!</h1>".to_string())
+                                    )
                                 }
-                                Err(e) => println!("Failed to parse a request: {}", e)
+                                Err(err) => {
+                                    println!("Failed to parse a request: {}", err);
+                                    Response::new(StatusCode::BadRequest, None)
+                                }
+                            };
+
+                            if let Err(err) = response.send(&mut stream) {
+                                println!("Failed to send response: {}", err);
                             }
                         }
                         Err(e) => println!("Failed to read from connection: {}", e)
